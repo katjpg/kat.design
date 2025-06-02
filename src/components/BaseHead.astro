@@ -1,0 +1,73 @@
+---
+// src/components/BaseHead.astro
+import "../styles/global.css";
+import { AstroSeo } from "@astrolib/seo";
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  canonicalURL?: string;
+}
+
+const {
+  title = "Your Default Site Title",
+  description = "Your default site description",
+  image = "/og-image.jpg",
+  canonicalURL = new URL(Astro.url.pathname, Astro.site)
+} = Astro.props;
+
+const fullTitle = title === "Your Default Site Title" ? title : `${title} | Your Site Name`;
+---
+
+<AstroSeo
+  title={fullTitle}
+  description={description}
+  canonical={canonicalURL}
+  openGraph={{
+    url: canonicalURL,
+    title: fullTitle,
+    description: description,
+    images: [
+      {
+        url: image,
+        width: 1200,
+        height: 630,
+        alt: title,
+        type: "image/jpeg",
+      },
+    ],
+    site_name: "Your Site Name",
+    type: "website",
+    locale: "en_US",
+  }}
+  twitter={{
+    handle: "@yourhandle",
+    site: "@yoursite", 
+    cardType: "summary_large_image",
+  }}
+/>
+
+<!-- Basic required meta tags -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="generator" content={Astro.generator} />
+
+<!-- Favicons -->
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" href="/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+
+<!-- Typography -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap"
+  rel="stylesheet"
+/>
+<link rel="preconnect" href="https://rsms.me/" />
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+
+<!-- Scripts -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>

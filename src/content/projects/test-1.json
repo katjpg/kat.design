@@ -1,0 +1,30 @@
+{
+  "date": "2025",
+  "title": "Memto",
+  "tags": ["Product Design"],
+  "image": "1.png",
+  "description": "The art of memory curation.",
+  "listenOn": [
+    { "name": "Spotify", "url": "#" },
+    { "name": "Apple Podcast", "url": "#" }
+  ],
+  "topics": [
+    "The impact of Armin Hofmann on Swiss typography.",
+    "Understanding visual balance in minimalistic design."
+  ],
+  "sponsors": [
+    {
+      "name": "Grid Masters",
+      "description": "Your go-to resource for advanced design grids and templates."
+    }
+  ],
+  "links": [
+    { "label": "Learn more about Armin Hofmann", "url": "#" }
+  ],
+  "transcript": [
+    {
+      "speaker": "Host",
+      "text": "Welcome to this episode where we discuss Armin Hofmann's influence on modern design..."
+    }
+  ]
+}

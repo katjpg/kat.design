@@ -1,0 +1,408 @@
+---
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import Text from "@/components/ui/elements/Text.astro";
+import Wrapper from "@/components/ui/containers/Wrapper.astro";
+
+const projects = await getCollection('projects');
+const sortedProjects = projects.sort((a, b) => 
+  new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+);
+
+const images = import.meta.glob<{ default: any }>('@/images/*.png', { eager: true });
+const getImage = (filename: string) => {
+  const imagePath = `/src/images/${filename}`;
+  return images[imagePath]?.default;
+};
+
+// Project data for client-side JavaScript
+const projectsData = sortedProjects.map(project => ({
+  date: project.data.date,
+  title: project.data.title,
+  tags: project.data.tags,
+  image: project.data.image,
+  description: project.data.description,
+  imageSrc: getImage(project.data.image)?.src || ''
+}));
+
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.getFullYear().toString();
+};
+---
+
+<Wrapper variant="standard">
+  <div class="responsive-layout">
+    <!-- Left Fixed Container for Hover Images (hidden on small screens) -->
+    <aside class="left-hover-container">
+      <!-- Hover Image Container -->
+      <div class="hover-image-display">
+        <div class="image-wrapper">
+          <img 
+            class="hover-image-element" 
+            src="" 
+            alt="" 
+          />
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Scrollable Project List Container -->
+    <main class="project-list-container">
+      <div class="project-content">
+        <!-- Project List -->
+        <div class="project-list">
+          {sortedProjects.map((project, index) => (
+            <div class="project-item" data-project-index={index}>
+              <div class="project-header">
+                <!-- Project Title -->
+                <div class="project-title">
+                  <Text tag="h3" variant="textBase" class="italic text-black dark:text-white font-serif text-xl leading-relaxed tracking-wide">
+                    {project.data.title}
+                  </Text>
+                </div>
+                
+                <!-- Divider Line -->
+                <div class="project-divider">
+                  <div class="divider-line"></div>
+                </div>
+                
+                <!-- Year -->
+                <div class="project-date">
+                  <Text tag="time" variant="textBase" class="text-black dark:text-white font-serif tracking-wide" datetime={formatDate(project.data.date)}>
+                    {formatDate(project.data.date)}
+                  </Text>
+                </div>
+              </div>
+              
+              <!-- Project Description -->
+              <div class="project-description">
+                <Text tag="p" variant="textBase" class="text-neutral-500 dark:text-neutral-400 font-serif leading-relaxed">
+                  {project.data.description}
+                </Text>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>
+  </div>
+</Wrapper>
+
+<!-- Pass project data to client-side JavaScript -->
+<script define:vars={{ projectsData }}>
+  window.projectsData = projectsData;
+</script>
+
+<script>
+  import { gsap } from 'gsap';
+
+  // GSAP settings for performance
+  gsap.defaults({
+    ease: "power2.out",
+    duration: 0.3
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const projectItems = document.querySelectorAll(".project-item");
+    const hoverImageDisplay = document.querySelector(".hover-image-display") as HTMLElement;
+    const hoverImageElement = document.querySelector(".hover-image-element") as HTMLImageElement;
+    const leftContainer = document.querySelector(".left-hover-container") as HTMLElement;
+    
+    // Get project data from the data passed from Astro
+    const projectsData = (window as any).projectsData || [];
+
+    // Function to get project data
+    const getProjectData = (index: number) => {
+      return projectsData[index] || {
+        title: 'Project Title',
+        description: 'Project description',
+        imageSrc: ''
+      };
+    };
+
+    // Check if left container is visible
+    const isLeftContainerVisible = () => {
+      if (!leftContainer) return false;
+      const styles = window.getComputedStyle(leftContainer);
+      return styles.display !== 'none';
+    };
+
+    projectItems.forEach((item, index) => {
+      const textElements = item.querySelectorAll(".project-title, .project-description, .project-date");
+      const projectData = getProjectData(index);
+
+      // Hover effects only when left container is visible
+      item.addEventListener("mouseenter", () => {
+        if (!isLeftContainerVisible()) return;
+        
+        // Subtle text dim
+        gsap.to(textElements, {
+          opacity: 0.6,
+          duration: 0.2
+        });
+
+        // Show hover image
+        if (projectData.imageSrc && hoverImageElement) {
+          hoverImageElement.src = projectData.imageSrc;
+          hoverImageElement.alt = projectData.title;
+          
+          gsap.to(hoverImageDisplay, {
+            opacity: 1,
+            scale: 1,
+            duration: 0.4,
+            ease: "back.out(1.2)"
+          });
+        }
+      });
+
+      item.addEventListener("mouseleave", () => {
+        if (!isLeftContainerVisible()) return;
+
+        // Restore text
+        gsap.to(textElements, {
+          opacity: 1,
+          duration: 0.2
+        });
+
+        // Hide hover image
+        if (hoverImageDisplay) {
+          gsap.to(hoverImageDisplay, {
+            opacity: 0,
+            scale: 0.95,
+            duration: 0.3
+          });
+        }
+      });
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      // Reset hover states on resize
+      if (hoverImageDisplay) {
+        gsap.set(hoverImageDisplay, { opacity: 0 });
+      }
+      
+      projectItems.forEach((item) => {
+        const textElements = item.querySelectorAll(".project-title, .project-description, .project-date");
+        gsap.set(textElements, { opacity: 1 });
+      });
+    });
+  });
+</script>
+
+<style>
+  /* Main responsive layout */
+  .responsive-layout {
+    display: flex;
+    max-height: 85vh;
+  }
+
+  /* Left hover container */
+  .left-hover-container {
+    width: 50%;
+    background-color: rgb(243 244 246);
+    border-radius: 16px;
+    margin-right: 4rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .left-hover-container {
+      background-color: rgb(30, 32, 40);
+    
+    }
+  }
+
+  /* Hover image display */
+  .hover-image-display {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: all 0.3s ease-out;
+    width: 50%;
+    height: 80%;
+    will-change: transform, opacity;
+  }
+
+  .image-wrapper {
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    background-color: white;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .image-wrapper {
+      background-color: rgb(23 23 23);
+    }
+  }
+
+  .hover-image-element {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.2s ease;
+  }
+
+  /* Right project list container */
+  .project-list-container {
+    width: 50%;
+    overflow-y: auto;
+    max-height: 85vh;
+
+    -webkit-scrollbar-width: none;
+  }
+
+.project-list-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for Firefox */
+.project-list-container {
+  scrollbar-width: none;
+}
+
+/* Hide scrollbar for IE and Edge */
+.project-list-container {
+  -ms-overflow-style: none;
+}
+  
+
+  .project-content {
+    padding: 2rem 0;
+  }
+
+  .project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  /* Project item structure - ALWAYS PRESERVED */
+  .project-item {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+
+  .project-item:hover {
+    opacity: 0.8;
+  }
+
+  /* Project header with title-divider-date structure */
+  .project-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: .5rem;
+    min-width: 0; /* Allow flex items to shrink */
+  }
+
+  .project-title {
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .project-divider {
+    flex: 1;
+    margin: 0 1.5rem;
+    min-width: 2rem; 
+  }
+
+  .divider-line {
+    border-top: 1px solid rgb(209 213 219);
+    width: 100%;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .divider-line {
+      border-color: rgb(75 85 99);
+    }
+  }
+
+  .project-date {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .project-description {
+    padding-left: 0;
+  }
+
+
+  
+  /* Hide left container when viewport gets too small (1200px and below) */
+  @media (max-width: 1200px) {
+    .left-hover-container {
+      display: none !important;
+    }
+    
+    .project-list-container {
+      width: 100%;
+    }
+    
+    .responsive-layout {
+      flex-direction: column;
+    }
+  }
+
+  /* Large desktop adjustments while preserving structure */
+  @media (max-width: 1400px) and (min-width: 1201px) {
+    .left-hover-container {
+      width: 45%;
+    }
+    
+    .project-list-container {
+      width: 55%;
+    }
+  }
+
+
+
+  /* Performance optimizations */
+  .project-item,
+  .hover-image-display,
+  .project-title,
+  .project-description,
+  .project-date {
+    will-change: opacity;
+  }
+
+  .hover-image-display {
+    will-change: transform, opacity;
+  }
+
+  /* Custom scrollbar for project list */
+  .project-list-container::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .project-list-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .project-list-container::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.3);
+    border-radius: 3px;
+  }
+
+  .project-list-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.5);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .project-list-container::-webkit-scrollbar-thumb {
+      background: rgba(75, 85, 99, 0.3);
+    }
+
+    .project-list-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(75, 85, 99, 0.5);
+    }
+  }
+</style>

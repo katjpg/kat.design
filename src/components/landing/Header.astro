@@ -1,0 +1,36 @@
+---
+// ui
+import Text from "@/components/ui/elements/Text.astro";
+import Wrapper from "@/components/ui/containers/Wrapper.astro";
+
+
+const links = [
+  { name: "Projects", href: "#_" },
+  { name: "Digital Garden", href: "#_" },
+  { name: "About", href: "#_" },
+];
+---
+
+<Wrapper variant="standard" class="pb-12">
+  <div
+    class="flex items-center justify-between text-gray-medium dark:text-base-medium"
+  >
+    <Text tag="p" variant="textBase" class="font-serif italic uppercase">
+      kat</Text
+    >
+    <div class="flex gap-8 items-center">
+      {
+        links.map((link) => (
+          <Text
+            tag="a"
+            href={link.href}
+            variant="textBase"
+            class="font-serif italic"
+          >
+            {link.name}
+          </Text>
+        ))
+      }
+    </div>
+  </div>
+</Wrapper>
